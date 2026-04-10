@@ -1,3 +1,599 @@
+I'm building an experience in ESRI with the experience builder - I have popup enabled for my points but the sidebar displaces the points in a way that 'smushes' them. How do I make my popups 'float' and not get displaced in this way.
+Apr 9
+Deciphered popup displacement issue and positioning solution
+
+In Experience Builder, the default popup behavior docks them into a sidebar panel, which reshapes the map and pushes your points around. To get floating popups instead:
+
+    Select your Map widget in the builder.
+    In the widget's settings panel, look for Tools → Popup.
+    Change the popup display option from Dock (side panel) to Float (sometimes labeled "Popup" vs "Side panel" depending on your version).
+
+If you don't see that toggle directly, try this alternative approach: in the Map widget settings, go to Tools, remove or disable the built-in popup tool, and instead enable the Popup option under the map's General settings where "Float" is typically the default.
+
+In some older versions of Experience Builder, the option is under Map widget → Content → Popup → Enable popup with a layout choice between "Dock" and "Float."
+
+If none of those match your UI exactly, the naming varies across versions — search the settings for anything referencing popup "display mode," "panel mode," or "dock." Switching away from the docked/side-panel mode is what stops the map from resizing and displacing your points.
+Apr 9
+The user prompt is empty, so I cannot provide a summary in the user's language. However, based on the thinking block alone, here is a summary: Investigated widget configuration and troubleshooting possibilities
+
+You're actually already set up correctly — "Dock the pop-up" is unchecked, which should give you floating popups.
+
+If your points are still getting displaced, the issue is likely the sidebar/panel in your Experience Builder layout itself, not the popup docking. When you click a feature and a sidebar widget (like a List or Details widget) opens or expands, it resizes the map container, which shifts your points.
+
+To fix that:
+
+    Check if you have a Sidebar widget or a collapsible panel in your layout that opens on click. If so, set that panel's layout to overlay the map rather than push it. You can do this by selecting the Sidebar/Panel widget and changing its behavior so it floats over content instead of resizing adjacent widgets.
+    Alternatively, in your page layout, make sure the map widget is set to a fixed size or is inside a container that doesn't resize when sibling panels open.
+
+The core fix is ensuring nothing in your layout causes the map's container to resize when a panel appears — the map should stay the same dimensions, with any panels overlaying on top.
+
+Sidebar i have
+Apr 9
+Diagnosed sidebar widget layout conflict issue
+
+That's your culprit. The Sidebar widget by default pushes adjacent content when it expands, which resizes the map and displaces your points.
+
+To fix it, select your Sidebar widget and in its settings look for the Overlay option — change it from Push to Overlay. This makes the sidebar float on top of the map instead of shrinking it.
+
+If you don't see a push/overlay toggle directly, try setting the sidebar's position to Absolute in the layout settings, which achieves the same effect — it takes the sidebar out of the normal flow so the map stays full-size underneath.
+
+I want to publish the app so it doesn't require an ESRI login
+Apr 9
+Identified solution for public app sharing without authentication
+
+To make your Experience Builder app publicly accessible without an ESRI login:
+
+    Share your web maps/layers first — go to your ArcGIS Online content, find each web map and feature layer used in your app, and set their sharing to Everyone (public).
+    Share the Experience itself — go to your Experience Builder app's item page in ArcGIS Online and set sharing to Everyone (public).
+    Publish — back in Experience Builder, hit Publish. The published URL will now be accessible without sign-in.
+
+The key step people miss is #1 — if the underlying data layers aren't shared publicly, users will still get a login prompt even if the app itself is public.
+
+What if I don't want the map openly accessible? Just the app...
+Apr 9
+Deciphered selective sharing between app access and map data visibility
+
+You can't fully avoid this — if the app loads map data, the viewer needs access to that data. But you have a couple of options to limit exposure:
+
+    Share layers with "Everyone" but don't make them searchable — in ArcGIS Online, when sharing your web map/layers publicly, uncheck "Allow this item to be found in search" in the item's settings. The data is technically public (so the app works without login), but it won't show up in ArcGIS Online search results or be easily discoverable.
+    Use a proxy or OAuth app token — more advanced, but you can configure your app to authenticate on behalf of users using an app-level token. This way the data stays private, but the app itself handles authentication behind the scenes. Look into registering your app in ArcGIS Online under Settings → Security → App Registration and using an API key or OAuth 2.0 app credentials.
+
+Option 1 is the quick and practical approach — your data is accessible only if someone knows the exact URL, but won't be browsable. Option 2 is the proper secure route but takes more setup.
+
+Can you look it up?
+Apr 9
+Validated prior findings and unearthed additional solution option
+
+Based on community discussions, there's no built-in way to serve private data without login — users will have to sign
+Esri Community
+in unless the content is publicly shared.
+
+Here are your realistic options:
+
+Best option: Hosted Feature Layer Views — Create a view layer from your original layers and use the views in your Experience. You can share the view publicly while keeping the original data source private. Updates to the original will flow through to the views automatically.
+Esri Community
+This lets you control exactly which fields/features are exposed publicly while your source data stays private.
+
+AGOL Proxy approach — You can use the built-in proxy within ArcGIS Online to limit which applications can see the data, restricting access to only your Experience's URL.
+Esri Community
+This prevents the proxied layer from being viewed in any other application.
+
+Two-tab approach — Create separate public and internal tabs in your Experience, each pointing to different maps. The app defaults to the public tab (no login required), and users sign in only when accessing the internal tab.
+Esri Community
+
+The view layer approach is the simplest and most common solution — it gives public users access to a controlled subset of your data without exposing your source layers.
+
+Let's do the AGOL proxy approach
+Apr 9
+Unearthed relevant documentation for proxy implementation
+
+Here are the steps based on Esri's documentation:
+
+1. Add your secure layer as a new item with stored credentials
+
+Go to ArcGIS Online → Content → New item → URL. Paste your original hosted feature layer's REST URL. It should be recognized as an ArcGIS Server web service. Enable the "Store credentials with service item. Do not prompt for authentication" option, then enter your credentials.
+Esri Support
+
+This creates a new proxy item that authenticates on behalf of users.
+
+2. Build your web map using the proxied layer
+
+Create a new web map using this proxied service item (not your original layer). Configure the popup to not show fields containing sensitive information.
+Esri Support
+
+3. Set up rate limiting and referrer restrictions
+
+Open the proxied item's settings page. Check Enable rate limiting and set the limits — a maximum number of requests for a specific time period, and the referrer URLs that can access your service.
+ArcGIS
+Add your Experience Builder app's published URL as the allowed referrer.
+
+Your referrer URLs can be fully qualified URLs like https://www.arcgis.com, wildcards like https://*.arcgis.com, or IP addresses. Due to recent browser referrer policy changes, consider setting the origin URL instead of the full path.
+ArcGIS
+
+4. Share and publish
+
+Share the proxied item publicly, then use it in your Experience Builder app and publish. Users won't get a login prompt, and the data is only accessible from your app's URL.
+
+Your original layer stays private — only the proxied version is public, and it's locked down to your app's URL.
+
+To share publicly, first turn on the Public data collection option on the Settings tab of the layer's item page then share again. For optimal performance and data integrity, please consider disabling editing or using a non-editable view layer.
+Apr 9
+Identified user's public sharing configuration issue
+
+That message means your layer has editing enabled, and AGOL won't let you share an editable layer publicly without explicitly opting in.
+
+Go to your proxied layer's item page → Settings tab, scroll to the Editing section, and either:
+
+    Toggle on "Enable public data collection" (if you actually need public editing, like a survey/form), then share again
+    Or better yet, uncheck "Enable editing" entirely if your app is view-only — then it'll let you share publicly without that warning
+
+If you need editing on the original but not in the public app, this is where the view layer approach pairs nicely — create a non-editable view from your layer, proxy that instead, and share it publicly. No editing exposure, no warning.
+
+It still wants credentials
+Apr 9
+Disambiguated proxy approach versus hosted feature layers
+
+A few things to check — the issue depends on whether you're using a hosted feature layer in AGOL or an ArcGIS Server service:
+
+If it's a hosted feature layer in AGOL: The stored-credentials proxy approach is only supported for token-based ArcGIS Server services
+ArcGIS
+— it doesn't work for AGOL-hosted layers the same way. For hosted layers, the data itself needs to be shared publicly (or via a public view layer) for it to work without login.
+
+If it is an ArcGIS Server service but it's still prompting:
+
+    Credentials can only be saved if the ArcGIS Server uses built-in (token-based) security, not web-tier authentication.
+    Esri Support
+    The service must be externally visible on the internet — ArcGIS Online can't validate credentials for internal-only servers.
+    Esri Support
+    SSL certificates must be from a trusted CA and properly configured — self-signed certs are not allowed.
+    Esri Support
+
+Also critical: Make sure your Experience Builder app is using the proxied item (the one with stored credentials) in its web map — not the original layer URL. If the web map still references the original service directly, it'll bypass the proxy and prompt for login.
+
+Given the friction you're hitting, honestly the view layer approach might be simpler for your case — create a hosted feature layer view, limit which fields are exposed, share it publicly, and use that in your Experience. Would you like to try that route instead?
+
+Just tell me how to make it so anyone with the QR code can access without being prompted for login
+Apr 9
+Identified public sharing as the optimal solution
+
+Share your web map and all its feature layers to Everyone (public). That's it.
+
+There's no way around it — if the data isn't public, AGOL will prompt for login. The proxy approach only works for ArcGIS Server services, not hosted feature layers.
+
+Steps:
+
+    Go to Content, find each feature layer → Share → Everyone (public)
+    Do the same for your web map
+    Do the same for your Experience itself
+    Publish the Experience
+
+If you're worried about discoverability, uncheck "Allow this item to be found in search" on each item's settings page. The data will be technically public but only accessible to someone who has the direct URL or your QR code.
+
+Still wants a login
+Apr 9
+Identified probable sources of login requirement
+
+Two common culprits when "everything is public" but it still prompts:
+
+1. Your basemap isn't public. The most common cause is that your org is using developer basemaps, which aren't public. Your basemap might not be shared publicly, and you won't always see that unless you go into the basemap settings and check each source.
+Esri Community
+Open your web map, check what basemap you're using — switch to a standard Esri public basemap like "Topographic" or "Streets" and test again.
+
+2. Skip the credential banner. In Experience Builder's general settings, there's a "Skip credential banner" option. If your app includes any widgets, data, or utility services that require credentials, a banner appears prompting sign-in. Turning this toggle on suppresses that prompt.
+ArcGIS
+
+To troubleshoot: Open your published app URL in an incognito/private browser window — this ensures you're not riding on a cached AGOL session. If it still prompts, it's almost certainly a non-public basemap or a hidden layer you missed.
+
+How to check if my basemap is public? I opted to skip credential but still blocked by login.
+Apr 9
+Pinpointed essential information regarding basemap visibility settings
+
+This is almost certainly your basemap. Here's the quick fix and how to check:
+
+Quick fix: Open your web map in Map Viewer, click Basemap, and switch to OpenStreetMap or any standard Esri basemap like "Topographic." Save the map. Changing from the developer basemap to OpenStreetMap resolved login prompts for multiple users experiencing this exact issue.
+Esri Community
+
+How to check if your basemap is the problem: Look at your sharing URL — if it still contains your username (like https://YourName.maps.arcgis.com/...), it will always prompt for login. When truly shared publicly, the link changes to https://www.arcgis.com/....
+Esri Community
+
+Also check this org setting: Make sure "Allow anonymous access to the organization's website" is enabled in your AGOL organization settings under Security.
+Esri Support
+Without this, public users can't access anything through your org's URL.
+
+So the steps are:
+
+    Open your web map → swap the basemap to OpenStreetMap or a standard Esri one → save
+    Verify anonymous access is enabled in Organization → Settings → Security
+    Re-publish your Experience
+    Test in an incognito window
+
+Webmap?
+Apr 9
+Deciphered web map concept within Experience Builder context
+
+Your Experience Builder map widget is connected to a web map — that's where the basemap lives.
+
+To find it: in Experience Builder, click your Map widget, then in the settings panel on the right look at Data or Select map — it'll show the name of the web map it's using. Click that name to open it in Map Viewer.
+
+Alternatively, go to Content in ArcGIS Online and search for it there — it'll be listed as a Web Map item type.
+
+Once you have it open in Map Viewer, change the basemap and save.
+
+Basemap is public
+Apr 9
+Investigated access permissions and potential configuration issues
+
+Then check these two things:
+
+1. Anonymous access — Go to your ArcGIS Online Organization → Settings → Security. Is "Allow anonymous access to your organization" turned on? If this is off, everything behind your org URL requires login regardless of sharing settings.
+
+2. Subscriber/premium content — Does your map use any Living Atlas layers or other subscriber content? These require credentials even if your own layers are public. Check your web map's layer list for any layers you didn't publish yourself.
+
+Which of these might be the issue?
+
+Not incognito - no access
+no indication I have anything premium
+Apr 9
+Thinking about interpreting fragmented statements regarding account access and premium features
+
+Is the anonymous access setting turned on or off?
+
+where check?
+Apr 9
+Pinpointed anonymous access setting location
+
+In ArcGIS Online:
+
+    Click Organization (top nav bar)
+    Click Settings
+    Click Security (left sidebar)
+    Look for "Allow anonymous access to your organization" — make sure it's checked/toggled on
+
+It's checked...
+Apr 9
+Excavated alternative solutions through deeper investigation
+
+Let's narrow it down. Open an incognito window and paste your web map's URL directly (not the Experience). Does it also prompt for login?
+
+If yes → the problem is in the web map or its layers, not the Experience.
+
+If no → the problem is specifically with the Experience item's sharing settings.
+
+Also — can you check one more thing: go to Content, find your Experience item, and look at the Sharing level displayed. Does it say Everyone (public) or something else?
+
+yes- it prompts
+Apr 9
+Investigated login prompt origins across map layers
+
+Good — the problem is in the web map, not the Experience. Now let's find which layer is the culprit.
+
+Open your web map in Map Viewer, then remove your layers one at a time, save, and test in incognito after each removal. When the login prompt disappears, you've found the offending layer.
+
+Alternatively — open the incognito browser's Developer Tools (F12) → Network tab, then load the web map URL. Look for any request that returns a 401 or 403 status or redirects to a login page. That'll tell you exactly which service is requiring credentials.
+Apr 9
+The user prompt is empty, so I cannot provide a summary in the user's language. Unable to complete task
+
+Streets (Night) is likely the problem — it may be a developer or subscriber basemap that requires authentication.
+
+Switch it: open your web map in Map Viewer → click Basemap → pick OpenStreetMap or a standard one like Topographic or Streets. Save, then test in incognito.
+
+If you want to keep the dark theme, try Dark Gray Canvas — that one is public.
+
+Still won't go! Even with dark gray canvas
+Apr 9
+Thinking about troubleshooting why dark gray canvas isn't working as intended
+
+Then it's your Vacant Properties feature layer. Click on it in your Content and check its sharing level — does it say Everyone (public)?
+
+Yes
+Apr 9
+Identified hidden developer basemap settings and configuration options
+
+One more thing to check — the web map may have a hidden "show developer basemaps" option enabled,
+Esri Community
+which causes the login prompt even after you change the visible basemap. This setting can persist even after switching basemaps.
+
+To fix it:
+
+    Open your web map in Map Viewer
+    Click Settings (gear icon) or go to the map's item page → Settings tab
+    Look for a checkbox like "Show developer basemaps" and turn it off
+    Save the map
+
+Once you turn it off and save, the problem goes away.
+Esri Community
+
+If you can't find that setting, try this: create a brand new web map from scratch, add your Vacant Properties layer, pick a standard basemap, save, then point your Experience Builder to this new map. That eliminates any hidden settings from the old map.
+
+gear icon?
+Apr 9
+Pinpointed settings location within Map Viewer interface
+
+In Map Viewer, look at the left sidebar — there should be icons for layers, basemap, etc. The Settings option might be under the three-dot menu (⋯) or under Map properties.
+
+But honestly, the fastest way to test this: create a brand new web map.
+
+    Go to Content → Create → New Map
+    Add your Vacant Properties layer
+    Pick a standard basemap like Topographic
+    Save it, share it Everyone (public)
+    Point your Experience Builder to this new map
+    Publish and test in incognito
+
+If the new map works without a login prompt, you know the old map had a hidden setting causing the issue.
+
+Is there a way to have an initial popup when opening the app that explains how to use?
+Apr 9
+Identified request for welcome popup feature
+
+Yes — in Experience Builder, add a Page Window (sometimes called a Window or Splash Screen):
+
+    In the builder, look at the bottom of the left panel for Window or click the + on your page
+    Add a Window widget — this creates a pop-up overlay
+    Design it with your instructions text, images, etc.
+    In the window's settings, set it to Open when the app starts
+
+If you don't see a Window option, you can also use a Section widget set to overlay mode, or an Alert widget that triggers on page load.
+
+Would you like help with what to put in it?
+
+Custom CSS layout or anything like that available?
+Apr 9
+Identified question regarding custom CSS capabilities
+
+Yes — Experience Builder has a Custom CSS option:
+
+    In the builder, click the three-dot menu (⋯) in the top toolbar
+    Look for Custom CSS or go to App Settings → Style → Custom CSS
+
+You can write CSS there to override default widget styles, adjust spacing, fonts, colors, etc.
+
+Also, individual widgets have a Style tab in their settings where you can adjust things like border radius, background, shadow, and padding without writing CSS.
+
+Are you trying to style something specific?
+
+pdf
+
+Nice - I want a shiny CSS front page - city colors for El Dorado KS - Use attached for color scheme reference
+Apr 9
+Prepared to design shiny CSS front page
+
+Here's your landing page — navy and gold pulled from your business card's color scheme, with animated gold accents, a grain texture overlay, and a "How It Works" section below. You can adapt the text, swap the "Explore the Map" button to link to your Experience, or embed this as a splash page. Let me know if you'd like any tweaks.
+El dorado landing
+Code · HTML 
+
+I don't want it exactly like that... I want to remove the permitting stuff and the 2nd page. Add an additional button for 'how to use' (I'll have you build out that page later).
+8:05 AM
+Acknowledged user's design modifications and button addition request
+
+Clean single page — two buttons side by side, contact bar at the bottom, no second section. The "How to Use" button is wired up and ready for whenever you want me to build that page. Let me know what you'd like on it.
+El dorado landing
+Code · HTML 
+
+add vacant property map under permits and inspections
+8:07 AM
+Orchestrated placement of vacant property map feature
+
+Added "Vacant Property Map" between the title and "City of El Dorado, Kansas." Let me know if you want the sizing or spacing adjusted.
+El dorado landing
+Code · HTML 
+
+What makes this map special is that it can actually modify our underlying map data from the field. Just scan the QR code.
+The pane on the left brings up editing. I've got all the points for unused meters - but the north side still needs eyes on it to confirm.
+Setting up the user interface to actually be functional on the phone is difficult, and I'm really limited on the data I can display... If we want more 'functions' they can be added easily, but it would be messy without a tablet sized device. The size of a phone screen also makes it easy to accidently delete something that would be hard to recover... 
+The icons are based on vacancy and severity of code violations:
+Green = Okay
+Orange = Code Violation
+Red = Potentially Condemnable
+The shape of the icon indicates whether it is vacant:
+Unoccupied: Empty Triangle
+Occupied: Solid Dot
+Uknown: Question Mark
+There's another dropdown inside the editor at the top you can press to show the Legend
+I've only tested this on my phone and the PC - the display may be awkward on other phone sizes.
+
+Great. Put these instructions into a professional layout, rewriting them, and build me a 2nd sheet - make a proceed to map button and a return to home button.
+8:13 AM
+Synthesized map interface documentation into professional instructional sheets
+
+Here's your How to Use page — same navy/gold design language, with sections covering what the map does, the color and shape legend, editing warnings, and device tips. Both buttons are at the bottom. Let me know if you want anything adjusted or if you're ready to wire up the links between pages.
+El dorado how to use
+Code · HTML 
+
+How to drop the CSS in?
+8:15 AM
+Deciphered custom CSS integration within Experience Builder
+
+In Experience Builder you can't drop in a full HTML page as a "theme" — but you have a few options:
+
+Option 1: Embed as a page in your Experience Add an Embed widget to a page in your Experience, switch it to Code mode, and paste the full HTML directly. This renders the page inside your app as an iframe.
+
+Option 2: Host externally and link Host the HTML files on a web server (even a free one like GitHub Pages) and either embed them via URL in the Embed widget, or have your QR code point to the hosted landing page first, with buttons linking to your Experience.
+
+Option 3: Use the Custom CSS panel for styling only If you just want to restyle the Experience Builder interface itself (not add a splash page), go to your app's Settings (gear or three-dot menu in the top toolbar) → look for Custom CSS or Style → paste CSS rules that target Experience Builder's existing elements.
+
+Which approach works best for your setup? If the QR code is the main entry point, Option 2 is probably cleanest — host the landing page, have "Explore the Map" link to your published Experience URL.
+
+Great - script is too big... Is there somewhere I could load up the sheets for free?
+8:18 AM
+Identified request for free static hosting solutions
+
+GitHub Pages is the easiest free option:
+
+    Create a free account at github.com
+    Click New repository → name it something like eldo-building
+    Upload both HTML files
+    Go to Settings → Pages → set source to main branch
+    Your pages will be live at https://yourusername.github.io/eldo-building/el-dorado-landing.html
+
+Other free options: Netlify (drag and drop a folder), Cloudflare Pages, or Google Sites (though that's more limited for custom HTML).
+
+GitHub Pages is probably the simplest for two static HTML files — no account fees, no server to manage, and you can update the files anytime by editing them in the repo.
+
+Where to upload?
+8:39 AM
+Deciphered GitHub file upload procedures
+
+Once you've created the repository:
+
+    You should be on the repository page — click Add file → Upload files
+    Drag and drop both HTML files in
+    Click Commit changes at the bottom
+
+Then to enable Pages: go to Settings (tab at the top of the repo) → Pages (left sidebar) → under Source pick Deploy from a branch → select main → click Save.
+
+Give it a minute and your site will be live.
+
+How to find what the links will be?
+8:41 AM
+Determined straightforward approach to link discovery
+
+After enabling Pages, go back to Settings → Pages — the live URL will be displayed at the top of that section. It'll be:
+
+https://yourusername.github.io/eldo-building/
+
+Your two pages will be at:
+
+    https://yourusername.github.io/eldo-building/el-dorado-landing.html
+    https://yourusername.github.io/eldo-building/el-dorado-how-to-use.html
+
+Replace yourusername with your GitHub username and eldo-building with whatever you named the repository. Once you have those URLs you can wire up the buttons on both pages and update your QR code to point to the landing page.
+
+Are those listed anywhere on github?
+8:42 AM
+Deciphered user's inquiry about GitHub URL locations
+
+Yes — go to your repository, then Settings → Pages (left sidebar). At the top of that section it'll show a green banner saying "Your site is live at" with the link. Click Visit site to open it.
+
+For the individual file URLs, GitHub won't list those — you just append the filename to that base URL yourself. So if it says your site is at https://yourusername.github.io/eldo-building/, your files are at that URL plus /el-dorado-landing.html and /el-dorado-how-to-use.html.
+
+404 error
+8:42 AM
+Investigated common GitHub Pages 404 causes
+
+A few things to check:
+
+    Did you name the branch main? Go to your repo's main page and look at the branch name in the dropdown at the top left. Make sure Pages is set to deploy from that same branch.
+    Are the files in the root? Click on the repo and make sure the HTML files are listed right on the main page — not inside a subfolder.
+    Wait a couple minutes — it can take 1-3 minutes after enabling Pages for the first deploy to finish. Look for an orange dot or green checkmark next to the latest commit on the repo page — orange means it's still building.
+    Check the exact URL — make sure there are no typos and the filename matches exactly, including capitalization.
+
+If you go to Actions tab in your repo, you should see a workflow run for Pages. Is it showing a green checkmark, orange circle, or red X?
+8:43 AM
+The user prompt is empty, so there is no primary language to match. However, based on the thinking block content, here is a summary: Verified file uploads and repository credentials
+
+Looks good — files are uploaded with a green checkmark. Your URLs should be:
+
+    https://lmc1337.github.io/eldo-building/el-dorado-landing.html
+    https://lmc1337.github.io/eldo-building/el-dorado-how-to-use.html
+
+Make sure Pages is enabled: Settings → Pages → Source: Deploy from branch → main. If you already did that and it's still 404, check the Actions tab for a deployment workflow — it may still be building.
+
+The button I'm overlaying on ESRI doesn't cover the button on the CSS like I want it to. It shows one way in the editor but then is off kilter when I run the app!
+9:00 AM
+Identified positioning discrepancy between edit and runtime modes
+
+That's a common Experience Builder issue — the editor view doesn't match the runtime layout because widget positions recalculate when the app actually renders.
+
+A few approaches:
+
+Easiest fix: Skip the overlay entirely. Instead of trying to line up an ExB button on top of the CSS button, make the CSS button itself do the navigation. In your hosted HTML, change the button's onclick to point directly to your Experience's published URL:
+html
+
+<button class="cta-btn" onclick="window.top.location.href='YOUR_EXPERIENCE_URL'">
+
+Using window.top ensures it breaks out of the embed iframe.
+
+If you need to keep the overlay approach: In Experience Builder, use percentage-based positioning instead of pixel values for the overlaying button widget, and test at multiple screen sizes. But honestly this will always be fragile.
+
+Want me to update the hosted HTML files with your actual Experience URL wired into the buttons?
+
+Can I code the CSS to operate inside of the app? Like link between pages?
+9:04 AM
+Evaluated multiple JavaScript methods for navigating Experience Builder pages
+
+Yes — since your HTML is embedded in an iframe inside Experience Builder, your buttons can navigate to other ExB pages using window.top.location.
+
+Experience Builder pages have URLs like:
+
+https://experience.arcgis.com/experience/YOUR_APP_ID/page/PAGE_NAME
+
+So in your HTML buttons:
+html
+
+<!-- Go to the map page -->
+<button class="cta-btn" onclick="window.top.location.href='https://experience.arcgis.com/experience/YOUR_APP_ID/page/Map'">
+  Explore the Map
+</button>
+
+<!-- Go to the how-to-use page -->
+<button class="cta-btn outline" onclick="window.top.location.href='https://experience.arcgis.com/experience/YOUR_APP_ID/page/HowToUse'">
+  How to Use
+</button>
+
+Setup:
+
+    Create separate pages in your Experience (e.g., Home, Map, HowToUse)
+    Put an Embed widget on the Home page with your landing HTML
+    Put an Embed widget on the HowToUse page with your how-to-use HTML
+    Put your Map widget on the Map page
+    Grab your published Experience URL and each page name
+    Update the button onclick values in your hosted HTML files with the real URLs
+
+Then the CSS pages drive the navigation seamlessly from inside the app. Want me to update the files once you have your page URLs?
+
+Do you need to redo the HTML for this?
+Image shows page names... Also, building department isn't centered properly in mobile view.
+9:08 AM
+Identified page names and resolved mobile centering issue
+
+I need your published Experience URL to wire up the links — it'll look something like https://experience.arcgis.com/experience/abc123.... Can you grab that?
+
+In the meantime, I'll fix the mobile centering issue on the landing page.
+Identified page navigation requirements and layout issues
+
+Fixed the centering — added text-align: center and reduced the letter-spacing on smaller screens so it doesn't overflow.
+
+To wire up the buttons between your ExB pages, I just need your published Experience URL. It'll look something like:
+
+https://experience.arcgis.com/experience/abc123def456...
+
+Once I have that, I'll update both HTML files with links to:
+
+    /page/Map-Screen (Explore the Map button)
+    /page/How-to-use (How to Use button)
+    /page/Splash-Screen (Return Home button)
+
+Then you just re-upload to GitHub.
+El dorado landing
+Code · HTML 
+
+I mean I want you to build the links in to be based on page...? The URL changes whenever I reload or republish so I don't want it to break... Is that doable?
+9:09 AM
+Devised dynamic URL manipulation for stable cross-page navigation
+
+Yes — since your HTML is embedded inside ExB, I can grab the parent URL dynamically and just swap the page name. The app ID won't matter.
+Contemplated dynamic link generation to prevent URL breakage
+
+Now the how-to-use page:
+Evaluated dynamic URL solution for persistent page-based links
+
+Both files updated. The script dynamically reads the parent Experience URL and swaps the page name, so it works regardless of your app ID or republishing. The page names it navigates to are:
+
+    Splash-Screen (home)
+    Map-Screen (map)
+    How-to-use (instructions)
+
+If your ExB page names have different exact spelling or capitalization, let me know and I'll adjust. Re-upload both files to GitHub to go live.
+El dorado landing
+Code · HTML 
+El dorado how to use
+Code · HTML 
+You've used 75% of your weekly limit
+
+
+Claude is AI and can make mistakes. Please double-check responses.
+El dorado how to use · HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,16 +615,16 @@
     --orange: #D4883E;
     --red: #C0504D;
   }
-
+ 
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
+ 
   body {
     font-family: 'Montserrat', sans-serif;
     background: var(--navy-deep);
     color: #fff;
     overflow-x: hidden;
   }
-
+ 
   .grain {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -37,12 +633,12 @@
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
     z-index: 9999;
   }
-
+ 
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
   }
-
+ 
   /* ===== HEADER ===== */
   .page-header {
     text-align: center;
@@ -52,7 +648,7 @@
       radial-gradient(ellipse at 30% 40%, rgba(196,169,98,0.06) 0%, transparent 60%),
       linear-gradient(175deg, var(--navy-deep), var(--navy));
   }
-
+ 
   .page-header::after {
     content: '';
     position: absolute;
@@ -61,7 +657,7 @@
     width: 60px; height: 3px;
     background: linear-gradient(90deg, var(--gold), var(--gold-light));
   }
-
+ 
   .back-link {
     display: inline-flex;
     align-items: center;
@@ -75,10 +671,10 @@
     transition: color 0.3s;
     animation: fadeUp 0.6s ease-out both;
   }
-
+ 
   .back-link:hover { color: var(--gold); }
   .back-link svg { width: 14px; height: 14px; }
-
+ 
   .page-header h1 {
     font-family: 'Cormorant Garamond', serif;
     font-size: clamp(1.8rem, 4vw, 2.8rem);
@@ -86,9 +682,9 @@
     color: #fff;
     animation: fadeUp 0.6s ease-out 0.1s both;
   }
-
+ 
   .page-header h1 em { color: var(--gold); font-style: italic; }
-
+ 
   .page-header p {
     font-size: 0.85rem;
     font-weight: 300;
@@ -97,25 +693,25 @@
     letter-spacing: 0.05em;
     animation: fadeUp 0.6s ease-out 0.2s both;
   }
-
+ 
   /* ===== CONTENT ===== */
   .content {
     max-width: 740px;
     margin: 0 auto;
     padding: 3rem 2rem 2rem;
   }
-
+ 
   .section {
     margin-bottom: 3rem;
     animation: fadeUp 0.6s ease-out both;
   }
-
+ 
   .section:nth-child(1) { animation-delay: 0.3s; }
   .section:nth-child(2) { animation-delay: 0.4s; }
   .section:nth-child(3) { animation-delay: 0.5s; }
   .section:nth-child(4) { animation-delay: 0.6s; }
   .section:nth-child(5) { animation-delay: 0.7s; }
-
+ 
   .section-label {
     font-size: 0.7rem;
     font-weight: 600;
@@ -124,7 +720,7 @@
     color: var(--gold);
     margin-bottom: 0.8rem;
   }
-
+ 
   .section h2 {
     font-family: 'Cormorant Garamond', serif;
     font-size: 1.5rem;
@@ -132,14 +728,14 @@
     color: #fff;
     margin-bottom: 1rem;
   }
-
+ 
   .section p {
     font-size: 0.88rem;
     font-weight: 300;
     color: rgba(255,255,255,0.65);
     line-height: 1.8;
   }
-
+ 
   /* ===== LEGEND ===== */
   .legend-grid {
     display: grid;
@@ -147,7 +743,7 @@
     gap: 1rem;
     margin-top: 1rem;
   }
-
+ 
   .legend-card {
     background: rgba(255,255,255,0.04);
     border: 1px solid rgba(255,255,255,0.06);
@@ -157,12 +753,12 @@
     gap: 1rem;
     transition: all 0.3s ease;
   }
-
+ 
   .legend-card:hover {
     background: rgba(255,255,255,0.06);
     border-color: rgba(196,169,98,0.15);
   }
-
+ 
   .legend-icon {
     flex-shrink: 0;
     width: 36px; height: 36px;
@@ -170,7 +766,7 @@
     align-items: center;
     justify-content: center;
   }
-
+ 
   .legend-card h4 {
     font-size: 0.82rem;
     font-weight: 600;
@@ -178,19 +774,19 @@
     margin-bottom: 0.25rem;
     letter-spacing: 0.02em;
   }
-
+ 
   .legend-card p {
     font-size: 0.78rem;
     font-weight: 300;
     color: rgba(255,255,255,0.5);
     line-height: 1.5;
   }
-
+ 
   /* Color-specific legend headings */
   .legend-card.green h4 { color: var(--green); }
   .legend-card.orange h4 { color: var(--orange); }
   .legend-card.red h4 { color: var(--red); }
-
+ 
   /* Shapes section */
   .shapes-grid {
     display: grid;
@@ -198,7 +794,7 @@
     gap: 1rem;
     margin-top: 1rem;
   }
-
+ 
   .shape-card {
     background: rgba(255,255,255,0.04);
     border: 1px solid rgba(255,255,255,0.06);
@@ -206,12 +802,12 @@
     text-align: center;
     transition: all 0.3s ease;
   }
-
+ 
   .shape-card:hover {
     background: rgba(255,255,255,0.06);
     border-color: rgba(196,169,98,0.15);
   }
-
+ 
   .shape-icon {
     margin: 0 auto 0.8rem;
     width: 40px; height: 40px;
@@ -219,21 +815,21 @@
     align-items: center;
     justify-content: center;
   }
-
+ 
   .shape-card h4 {
     font-size: 0.8rem;
     font-weight: 600;
     color: var(--gold-pale);
     margin-bottom: 0.3rem;
   }
-
+ 
   .shape-card p {
     font-size: 0.75rem;
     font-weight: 300;
     color: rgba(255,255,255,0.45);
     line-height: 1.5;
   }
-
+ 
   /* ===== CALLOUT BOX ===== */
   .callout {
     background: rgba(196,169,98,0.08);
@@ -241,29 +837,29 @@
     padding: 1.2rem 1.5rem;
     margin-top: 1rem;
   }
-
+ 
   .callout p {
     font-size: 0.82rem;
     color: rgba(255,255,255,0.6);
     line-height: 1.7;
   }
-
+ 
   .callout strong { color: var(--gold-pale); font-weight: 500; }
-
+ 
   /* ===== BUTTONS ===== */
   .btn-section {
     text-align: center;
     padding: 1rem 2rem 4rem;
     animation: fadeUp 0.6s ease-out 0.8s both;
   }
-
+ 
   .btn-row {
     display: flex;
     gap: 1rem;
     justify-content: center;
     flex-wrap: wrap;
   }
-
+ 
   .cta-btn {
     display: inline-flex;
     align-items: center;
@@ -283,7 +879,7 @@
     overflow: hidden;
     transition: all 0.4s ease;
   }
-
+ 
   .cta-btn::before {
     content: '';
     position: absolute;
@@ -291,38 +887,38 @@
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
     transition: left 0.5s ease;
   }
-
+ 
   .cta-btn:hover::before { left: 100%; }
   .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(196,169,98,0.3); }
-
+ 
   .cta-btn svg {
     width: 18px; height: 18px;
     transition: transform 0.3s ease;
   }
-
+ 
   .cta-btn:hover svg { transform: translateX(4px); }
-
+ 
   .cta-btn.outline {
     background: transparent;
     border: 1.5px solid var(--gold);
     color: var(--gold);
   }
-
+ 
   .cta-btn.outline:hover {
     background: rgba(196,169,98,0.1);
     box-shadow: 0 8px 30px rgba(196,169,98,0.15);
   }
-
+ 
   .cta-btn.outline svg { transition: transform 0.3s ease; }
   .cta-btn.outline:hover svg { transform: translateX(-4px); }
-
+ 
   /* ===== DIVIDER ===== */
   .divider {
     width: 40px; height: 2px;
     background: rgba(196,169,98,0.2);
     margin: 0 auto 3rem;
   }
-
+ 
   @media (max-width: 600px) {
     .legend-grid { grid-template-columns: 1fr; }
     .shapes-grid { grid-template-columns: 1fr; }
@@ -331,22 +927,33 @@
 </style>
 </head>
 <body>
-
+ 
 <div class="grain"></div>
-
+ 
+<script>
+  function goToPage(pageName) {
+    try {
+      var base = window.top.location.href.split('/page/')[0];
+      window.top.location.href = base + '/page/' + pageName;
+    } catch(e) {
+      alert('Navigation is only available when embedded in the Experience.');
+    }
+  }
+</script>
+ 
 <!-- HEADER -->
 <header class="page-header">
-  <a href="#" class="back-link" onclick="history.back(); return false;">
+  <a href="#" class="back-link" onclick="goToPage('Splash-Screen'); return false;">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
     Back
   </a>
   <h1>How to Use the <em>Vacant Property Map</em></h1>
   <p>A field-ready tool for inspections, code enforcement, and data collection</p>
 </header>
-
+ 
 <!-- CONTENT -->
 <div class="content">
-
+ 
   <!-- OVERVIEW -->
   <div class="section">
     <div class="section-label">Overview</div>
@@ -358,15 +965,15 @@
       <p><strong>Currently in progress:</strong> All points for unused meters have been loaded. The north side of the city still requires field verification to confirm vacancy status.</p>
     </div>
   </div>
-
+ 
   <div class="divider"></div>
-
+ 
   <!-- LEGEND — COLORS -->
   <div class="section">
     <div class="section-label">Icon Legend</div>
     <h2>Color Indicates Condition</h2>
     <p>Each property is color-coded based on the severity of any code violations on record.</p>
-
+ 
     <div class="legend-grid">
       <div class="legend-card green">
         <div class="legend-icon">
@@ -397,15 +1004,15 @@
       </div>
     </div>
   </div>
-
+ 
   <div class="divider"></div>
-
+ 
   <!-- LEGEND — SHAPES -->
   <div class="section">
     <div class="section-label">Occupancy Status</div>
     <h2>Shape Indicates Vacancy</h2>
     <p>The shape of each icon tells you whether the property is currently occupied.</p>
-
+ 
     <div class="shapes-grid">
       <div class="shape-card">
         <div class="shape-icon">
@@ -430,9 +1037,9 @@
       </div>
     </div>
   </div>
-
+ 
   <div class="divider"></div>
-
+ 
   <!-- EDITING -->
   <div class="section">
     <div class="section-label">Editing Data</div>
@@ -444,9 +1051,9 @@
       <p><strong>Use caution when editing.</strong> This map writes directly to the City's live GIS data. Deleted records are difficult to recover. Take care when working on smaller phone screens — accidental taps can modify or remove data.</p>
     </div>
   </div>
-
+ 
   <div class="divider"></div>
-
+ 
   <!-- DEVICE NOTES -->
   <div class="section">
     <div class="section-label">Device Compatibility</div>
@@ -455,22 +1062,24 @@
       This application is optimized for mobile phones and desktop browsers. A tablet provides the best field experience, offering more screen space for the editor and map simultaneously. Display may vary across phone screen sizes — if the interface feels cramped, try rotating to landscape orientation.
     </p>
   </div>
-
+ 
 </div>
-
+ 
 <!-- BUTTONS -->
 <div class="btn-section">
   <div class="btn-row">
-    <button class="cta-btn outline" onclick="history.back();">
+    <button class="cta-btn outline" onclick="goToPage('Splash-Screen')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
       Return Home
     </button>
-    <button class="cta-btn" onclick="">
+    <button class="cta-btn" onclick="goToPage('Map-Screen')">
       Proceed to Map
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
     </button>
   </div>
 </div>
-
+ 
 </body>
 </html>
+ 
+
