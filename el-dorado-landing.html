@@ -264,23 +264,6 @@
 
 <div class="grain"></div>
 
-<script>
-  function goToPage(pageName) {
-    try {
-      var ref = document.referrer;
-      if (ref && ref.indexOf('/page/') !== -1) {
-        var base = ref.split('/page/')[0];
-        window.top.location = base + '/page/' + pageName;
-      } else if (ref) {
-        window.top.location = ref.replace(/\/$/, '') + '/page/' + pageName;
-      } else {
-        window.top.location = '/page/' + pageName;
-      }
-    } catch(e) {
-      window.open('/page/' + pageName, '_top');
-    }
-  }
-</script>
 
 <section class="hero">
   <div class="logo-mark">ELDO<span>KS</span></div>
@@ -293,14 +276,14 @@
 
   <div class="cta-group">
     <div class="btn-row">
-      <button class="cta-btn" onclick="goToPage('Map-Screen')">
+      <a href="https://experience.arcgis.com/experience/852bacbca8674f23937dd708698c61d0/page/Map-Screen" target="_top" class="cta-btn">
         Explore the Map
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-      </button>
-      <button class="cta-btn outline" onclick="goToPage('How-to-use')">
+      </a>
+      <a href="https://experience.arcgis.com/experience/852bacbca8674f23937dd708698c61d0/page/How-to-use" target="_top" class="cta-btn outline">
         How to Use
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      </button>
+      </a>
     </div>
     <a href="tel:3163219100" class="secondary-link">or call 316-321-9100</a>
   </div>
