@@ -115,7 +115,9 @@
     letter-spacing: 0.3em;
     color: var(--gold-pale);
     text-transform: uppercase;
+    text-align: center;
     margin-bottom: 2.5rem;
+    padding: 0 1rem;
     animation: fadeUp 0.8s ease-out 0.2s both;
     position: relative; z-index: 1;
   }
@@ -253,6 +255,7 @@
   @media (max-width: 600px) {
     .contact-bar { justify-content: center; text-align: center; }
     .logo-mark { font-size: 2.4rem; }
+    .department { font-size: 1.1rem; letter-spacing: 0.15em; }
     .btn-row { flex-direction: column; }
   }
 </style>
@@ -260,6 +263,17 @@
 <body>
 
 <div class="grain"></div>
+
+<script>
+  function goToPage(pageName) {
+    try {
+      var base = window.top.location.href.split('/page/')[0];
+      window.top.location.href = base + '/page/' + pageName;
+    } catch(e) {
+      alert('Navigation is only available when embedded in the Experience.');
+    }
+  }
+</script>
 
 <section class="hero">
   <div class="logo-mark">ELDO<span>KS</span></div>
@@ -272,11 +286,11 @@
 
   <div class="cta-group">
     <div class="btn-row">
-      <button class="cta-btn" onclick="">
+      <button class="cta-btn" onclick="goToPage('Map-Screen')">
         Explore the Map
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
       </button>
-      <button class="cta-btn outline" onclick="">
+      <button class="cta-btn outline" onclick="goToPage('How-to-use')">
         How to Use
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       </button>
