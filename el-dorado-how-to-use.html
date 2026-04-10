@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to Use - Vacant Property Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #2A2A4A;
+    --navy-deep: #1E1E38;
+    --navy-light: #3A3A5C;
+    --gold: #C4A962;
+    --gold-light: #D4BF82;
+    --gold-pale: #E8DCC0;
+    --cream: #F5F0E6;
+    --cream-dark: #EDE5D4;
+    --green: #5A9E6F;
+    --orange: #D4883E;
+    --red: #C0504D;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background: var(--navy-deep);
+    color: #fff;
+    overflow-x: hidden;
+  }
+
+  .grain {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    z-index: 9999;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== HEADER ===== */
+  .page-header {
+    text-align: center;
+    padding: 3.5rem 2rem 2rem;
+    position: relative;
+    background:
+      radial-gradient(ellipse at 30% 40%, rgba(196,169,98,0.06) 0%, transparent 60%),
+      linear-gradient(175deg, var(--navy-deep), var(--navy));
+  }
+
+  .page-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 60px; height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    text-decoration: none;
+    margin-bottom: 1.5rem;
+    transition: color 0.3s;
+    animation: fadeUp 0.6s ease-out both;
+  }
+
+  .back-link:hover { color: var(--gold); }
+  .back-link svg { width: 14px; height: 14px; }
+
+  .page-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 600;
+    color: #fff;
+    animation: fadeUp 0.6s ease-out 0.1s both;
+  }
+
+  .page-header h1 em { color: var(--gold); font-style: italic; }
+
+  .page-header p {
+    font-size: 0.85rem;
+    font-weight: 300;
+    color: rgba(255,255,255,0.5);
+    margin-top: 0.8rem;
+    letter-spacing: 0.05em;
+    animation: fadeUp 0.6s ease-out 0.2s both;
+  }
+
+  /* ===== CONTENT ===== */
+  .content {
+    max-width: 740px;
+    margin: 0 auto;
+    padding: 3rem 2rem 2rem;
+  }
+
+  .section {
+    margin-bottom: 3rem;
+    animation: fadeUp 0.6s ease-out both;
+  }
+
+  .section:nth-child(1) { animation-delay: 0.3s; }
+  .section:nth-child(2) { animation-delay: 0.4s; }
+  .section:nth-child(3) { animation-delay: 0.5s; }
+  .section:nth-child(4) { animation-delay: 0.6s; }
+  .section:nth-child(5) { animation-delay: 0.7s; }
+
+  .section-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.8rem;
+  }
+
+  .section h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 1rem;
+  }
+
+  .section p {
+    font-size: 0.88rem;
+    font-weight: 300;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.8;
+  }
+
+  /* ===== LEGEND ===== */
+  .legend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .legend-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 1.2rem 1.2rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .legend-card:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(196,169,98,0.15);
+  }
+
+  .legend-icon {
+    flex-shrink: 0;
+    width: 36px; height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .legend-card h4 {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 0.25rem;
+    letter-spacing: 0.02em;
+  }
+
+  .legend-card p {
+    font-size: 0.78rem;
+    font-weight: 300;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.5;
+  }
+
+  /* Color-specific legend headings */
+  .legend-card.green h4 { color: var(--green); }
+  .legend-card.orange h4 { color: var(--orange); }
+  .legend-card.red h4 { color: var(--red); }
+
+  /* Shapes section */
+  .shapes-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .shape-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 1.5rem 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .shape-card:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(196,169,98,0.15);
+  }
+
+  .shape-icon {
+    margin: 0 auto 0.8rem;
+    width: 40px; height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .shape-card h4 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gold-pale);
+    margin-bottom: 0.3rem;
+  }
+
+  .shape-card p {
+    font-size: 0.75rem;
+    font-weight: 300;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.5;
+  }
+
+  /* ===== CALLOUT BOX ===== */
+  .callout {
+    background: rgba(196,169,98,0.08);
+    border-left: 3px solid var(--gold);
+    padding: 1.2rem 1.5rem;
+    margin-top: 1rem;
+  }
+
+  .callout p {
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.7;
+  }
+
+  .callout strong { color: var(--gold-pale); font-weight: 500; }
+
+  /* ===== BUTTONS ===== */
+  .btn-section {
+    text-align: center;
+    padding: 1rem 2rem 4rem;
+    animation: fadeUp 0.6s ease-out 0.8s both;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2.5rem;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--navy-deep);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s ease;
+  }
+
+  .cta-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .cta-btn:hover::before { left: 100%; }
+  .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(196,169,98,0.3); }
+
+  .cta-btn svg {
+    width: 18px; height: 18px;
+    transition: transform 0.3s ease;
+  }
+
+  .cta-btn:hover svg { transform: translateX(4px); }
+
+  .cta-btn.outline {
+    background: transparent;
+    border: 1.5px solid var(--gold);
+    color: var(--gold);
+  }
+
+  .cta-btn.outline:hover {
+    background: rgba(196,169,98,0.1);
+    box-shadow: 0 8px 30px rgba(196,169,98,0.15);
+  }
+
+  .cta-btn.outline svg { transition: transform 0.3s ease; }
+  .cta-btn.outline:hover svg { transform: translateX(-4px); }
+
+  /* ===== DIVIDER ===== */
+  .divider {
+    width: 40px; height: 2px;
+    background: rgba(196,169,98,0.2);
+    margin: 0 auto 3rem;
+  }
+
+  @media (max-width: 600px) {
+    .legend-grid { grid-template-columns: 1fr; }
+    .shapes-grid { grid-template-columns: 1fr; }
+    .btn-row { flex-direction: column; align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="grain"></div>
+
+<!-- HEADER -->
+<header class="page-header">
+  <a href="#" class="back-link" onclick="history.back(); return false;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+    Back
+  </a>
+  <h1>How to Use the <em>Vacant Property Map</em></h1>
+  <p>A field-ready tool for inspections, code enforcement, and data collection</p>
+</header>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- OVERVIEW -->
+  <div class="section">
+    <div class="section-label">Overview</div>
+    <h2>What This Map Does</h2>
+    <p>
+      The Vacant Property Map is a live, editable map connected directly to the City's GIS data. Field staff can scan the QR code on any mobile device, view property conditions in real time, and update records on the spot — no return trip to the office required.
+    </p>
+    <div class="callout" style="margin-top:1.2rem;">
+      <p><strong>Currently in progress:</strong> All points for unused meters have been loaded. The north side of the city still requires field verification to confirm vacancy status.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- LEGEND — COLORS -->
+  <div class="section">
+    <div class="section-label">Icon Legend</div>
+    <h2>Color Indicates Condition</h2>
+    <p>Each property is color-coded based on the severity of any code violations on record.</p>
+
+    <div class="legend-grid">
+      <div class="legend-card green">
+        <div class="legend-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="11" fill="none" stroke="#5A9E6F" stroke-width="2.5"/><path d="M9 14.5l3.5 3.5 6.5-7" stroke="#5A9E6F" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <h4>Green — No Violations</h4>
+          <p>Property is in acceptable condition with no outstanding code issues.</p>
+        </div>
+      </div>
+      <div class="legend-card orange">
+        <div class="legend-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="11" fill="none" stroke="#D4883E" stroke-width="2.5"/><line x1="14" y1="9" x2="14" y2="16" stroke="#D4883E" stroke-width="2.5" stroke-linecap="round"/><circle cx="14" cy="19.5" r="1.2" fill="#D4883E"/></svg>
+        </div>
+        <div>
+          <h4>Orange — Code Violation</h4>
+          <p>An active code violation has been identified and requires attention.</p>
+        </div>
+      </div>
+      <div class="legend-card red">
+        <div class="legend-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="11" fill="none" stroke="#C0504D" stroke-width="2.5"/><line x1="10" y1="10" x2="18" y2="18" stroke="#C0504D" stroke-width="2.5" stroke-linecap="round"/><line x1="18" y1="10" x2="10" y2="18" stroke="#C0504D" stroke-width="2.5" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <h4>Red — Potentially Condemnable</h4>
+          <p>Serious structural or safety concerns that may warrant condemnation proceedings.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- LEGEND — SHAPES -->
+  <div class="section">
+    <div class="section-label">Occupancy Status</div>
+    <h2>Shape Indicates Vacancy</h2>
+    <p>The shape of each icon tells you whether the property is currently occupied.</p>
+
+    <div class="shapes-grid">
+      <div class="shape-card">
+        <div class="shape-icon">
+          <svg width="36" height="36" viewBox="0 0 36 36"><polygon points="18,6 32,30 4,30" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linejoin="round"/></svg>
+        </div>
+        <h4>Empty Triangle</h4>
+        <p>Unoccupied</p>
+      </div>
+      <div class="shape-card">
+        <div class="shape-icon">
+          <svg width="36" height="36" viewBox="0 0 36 36"><circle cx="18" cy="18" r="10" fill="var(--gold)"/></svg>
+        </div>
+        <h4>Solid Dot</h4>
+        <p>Occupied</p>
+      </div>
+      <div class="shape-card">
+        <div class="shape-icon">
+          <svg width="36" height="36" viewBox="0 0 36 36"><circle cx="18" cy="18" r="11" fill="none" stroke="var(--gold)" stroke-width="2"/><text x="18" y="23" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="18" font-weight="700" fill="var(--gold)">?</text></svg>
+        </div>
+        <h4>Question Mark</h4>
+        <p>Unknown</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- EDITING -->
+  <div class="section">
+    <div class="section-label">Editing Data</div>
+    <h2>Making Updates in the Field</h2>
+    <p>
+      The left-side panel provides access to the property editor. Select any point on the map to view its details, then use the editor to update vacancy status, condition, or code violation severity. A dropdown at the top of the editor panel also provides access to the full map legend.
+    </p>
+    <div class="callout">
+      <p><strong>Use caution when editing.</strong> This map writes directly to the City's live GIS data. Deleted records are difficult to recover. Take care when working on smaller phone screens — accidental taps can modify or remove data.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- DEVICE NOTES -->
+  <div class="section">
+    <div class="section-label">Device Compatibility</div>
+    <h2>Best Practices</h2>
+    <p>
+      This application is optimized for mobile phones and desktop browsers. A tablet provides the best field experience, offering more screen space for the editor and map simultaneously. Display may vary across phone screen sizes — if the interface feels cramped, try rotating to landscape orientation.
+    </p>
+  </div>
+
+</div>
+
+<!-- BUTTONS -->
+<div class="btn-section">
+  <div class="btn-row">
+    <button class="cta-btn outline" onclick="history.back();">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+      Return Home
+    </button>
+    <button class="cta-btn" onclick="">
+      Proceed to Map
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+
+</body>
+</html>
