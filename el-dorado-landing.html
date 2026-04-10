@@ -267,10 +267,17 @@
 <script>
   function goToPage(pageName) {
     try {
-      var base = window.top.location.href.split('/page/')[0];
-      window.top.location.href = base + '/page/' + pageName;
+      var ref = document.referrer;
+      if (ref && ref.indexOf('/page/') !== -1) {
+        var base = ref.split('/page/')[0];
+        window.top.location = base + '/page/' + pageName;
+      } else if (ref) {
+        window.top.location = ref.replace(/\/$/, '') + '/page/' + pageName;
+      } else {
+        window.top.location = '/page/' + pageName;
+      }
     } catch(e) {
-      alert('Navigation is only available when embedded in the Experience.');
+      window.open('/page/' + pageName, '_top');
     }
   }
 </script>
